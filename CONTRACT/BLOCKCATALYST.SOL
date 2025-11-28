@@ -1,0 +1,61 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract BlockCatalyst {
+    address public owner;
+
+    // Struct to represent a Proposal
+    struct Proposal {
+        uint id;
+        string name;
+        uint voteCount;
+    }
+
+    // Mapping to store proposals
+    mapping(uint => Proposal) public proposals;
+
+    // Mapping to keep track of addresses that have voted
+    mapping(address => bool) public voters;
+
+    // State variables for proposal tracking
+    uint public proposalCount;
+    
+    // Event to notify new proposals and votes
+    event ProposalCreated(uint proposalId, string name);
+    event Voted(address indexed voter, uint proposalId);
+
+    // Constructor to set the contract owner
+    constructor() {
+        owner = msg.sender;
+    }
+
+    // Modifier to restrict access to the owner of the contract
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can perform this action");
+        _;
+    }
+
+    // Function to create a new proposal
+    function createProposal(string memory _name) public onlyOwner {
+        proposalCount++;
+        proposals[proposalCount] = Proposal(proposalCount, _name, 0);
+        emit ProposalCreated(proposalCount, _name);
+    }
+
+    // Function to vote for a proposal
+    function vote(uint _proposalId) public {
+        require(!voters[msg.sender], "You have already voted");
+        require(_proposalId > 0 && _proposalId <= proposalCount, "Invalid proposal ID");
+
+        voters[msg.sender] = true;
+        proposals[_proposalId].voteCount++;
+
+        emit Voted(msg.sender, _proposalId);
+    }
+
+    // Function to get the current vote count of a proposal
+    function getProposalVoteCount(uint _proposalId) public view returns (uint) {
+        require(_proposalId > 0 && _proposalId <= proposalCount, "Invalid proposal ID");
+        return proposals[_proposalId].voteCount;
+    }
+}
